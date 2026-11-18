@@ -92,6 +92,12 @@ public sealed class AppSettings
     /// <summary>Aléatoire à chaque événement : un favori différent est joué à chaque message, appel, etc.</summary>
     public bool RandomEachEvent { get; set; }
 
+    /// <summary>Fermer la fenêtre garde ViiCord actif près de l'horloge (réparation automatique, sons, mises à jour).</summary>
+    public bool KeepInTray { get; set; } = true;
+
+    /// <summary>Répare ViiCord tout seul quand Discord vient d'être mis à jour.</summary>
+    public bool AutoRepair { get; set; } = true;
+
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 

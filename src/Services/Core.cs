@@ -15,7 +15,7 @@ namespace ViiCord.Services;
 public static class AppInfo
 {
     public const string Name = "ViiCord";
-    public const string Version = "2.0.3";
+    public const string Version = "2.1.0";
     public const string Edition = "C# / .NET 8";
     public const string Creator = "byRedemptiion";
 }

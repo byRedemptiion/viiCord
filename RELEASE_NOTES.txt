@@ -1,1 +1,1 @@
-Nouvelle icône ViiCord : le logo dans un cadre noir et or en forme d'onde sonore, bien plus propre sur le Bureau et dans la barre des tâches. Bannières mieux détourées.
+ViiCord reste maintenant actif près de l'horloge quand tu fermes la fenêtre (clic droit sur l'icône pour quitter ou régler les options). Après une mise à jour de Discord, ViiCord se répare tout seul dès que Discord est fermé, ou te prévient s'il est ouvert. Option : démarrer avec Windows.

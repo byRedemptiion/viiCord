@@ -159,6 +159,7 @@ Section "Uninstall"
   RMDir "$INSTDIR"
 
   DeleteRegKey HKCU "${UNINST_KEY}"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "ViiCord"
 
   ; Réglages et sons perso : on demande (jamais supprimés si le hook est encore actif).
   ${If} $R9 != "1"

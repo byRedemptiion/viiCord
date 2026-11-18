@@ -15,6 +15,8 @@ public partial class AboutWindow : Window
     private static readonly string[] Features =
     {
         "Personnalisation des sons Discord",
+        "Reste actif près de l'horloge, démarrage avec Windows (option)",
+        "Réparation automatique après une mise à jour de Discord",
         "Messages",
         "Utilisateur qui rejoint / quitte",
         "Appels entrants et sortants",
@@ -34,7 +36,8 @@ public partial class AboutWindow : Window
 
     private static readonly HistoryItem[] History =
     {
-        new(AppInfo.Version, "Nouvelle icône propre : logo dans un cadre noir et or en forme d'onde sonore."),
+        new(AppInfo.Version, "ViiCord reste actif près de l'horloge (option), démarre avec Windows (option) et se répare tout seul après une mise à jour de Discord."),
+        new("2.0.3", "Nouvelle icône propre : logo dans un cadre noir et or en forme d'onde sonore."),
         new("2.0.2", "Bannières mieux détourées : le fond sombre autour du logo disparaît."),
         new("2.0.1", "Nouveau logo et icône. Une bannière ViiCord aux couleurs de chaque ambiance. Premium noir et or passe en premier."),
         new("2.0.0", "Nouveau nom : ViiCord, avec VIIRUS pour mascotte. Dossier des réglages migré vers %APPDATA%\\ViiCord sans rien perdre. Page À propos détaillée."),

@@ -20,6 +20,21 @@ namespace ViiCord;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
+    private bool _trayHintShown;
+    private bool _startedHidden;
+    public MainViewModel Vm => _vm;
+
+    /// <summary>Démarrage discret (avec Windows) : la fenêtre est créée mais reste cachée.</summary>
+    public void StartHidden()
+    {
+        _startedHidden = true;
+        ShowActivated = false;
+        WindowState = WindowState.Minimized;
+        Show();
+        Hide();
+        WindowState = WindowState.Normal;
+        ShowActivated = true;
+    }
     private readonly List<Border> _waveBars = new();
     private readonly Random _random = new();
     private readonly DispatcherTimer _toastTimer = new() { Interval = TimeSpan.FromSeconds(3.2) };
@@ -54,6 +69,23 @@ public partial class MainWindow : Window
         CloseButton.Click += (_, _) => Close();
         StateChanged += (_, _) => OnStateChanged();
 
+        // Fermer la fenêtre garde ViiCord près de l'horloge (réglable) : le clic droit sur l'icône permet de quitter.
+        Closing += (_, e) =>
+        {
+            if (App.IsQuitting || !App.TrayActive) return;
+            bool keep = true;
+            try { keep = ConfigService.ReadSettings().KeepInTray; } catch { }
+            if (!keep) { ((App)Application.Current).QuitFromWindow(); return; }
+            e.Cancel = true;
+            Hide();
+            if (!_trayHintShown)
+            {
+                _trayHintShown = true;
+                ((App)Application.Current).TrayBalloon("ViiCord reste actif",
+                    "Il surveille Discord près de l'horloge. Clic droit sur l'icône pour quitter ou régler les options.");
+            }
+        };
+
         // Le scan tourne en arrière-plan : la fenêtre reste fluide.
         Loaded += async (_, _) =>
         {
@@ -61,8 +93,11 @@ public partial class MainWindow : Window
             {
                 await _vm.ScanAsync();
                 if (HookService.RefreshLoaderIfStale()) _vm.NotifyModuleUpdated();
-                await _vm.ShowOnboardingAsync();      // écran de bienvenue (tout premier lancement)
-                await _vm.OfferActivationAsync();   // première utilisation / Discord mis à jour
+                if (!_startedHidden)
+                {
+                    await _vm.ShowOnboardingAsync();      // écran de bienvenue (tout premier lancement)
+                    await _vm.OfferActivationAsync();   // première utilisation / Discord mis à jour
+                }
                 _ = _vm.CheckForUpdateAsync(manual: false);   // mise à jour GitHub (silencieux)
             }
             catch (Exception ex)

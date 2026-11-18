@@ -199,7 +199,7 @@ public sealed class MainViewModel : ObservableObject
             UpdateProgressText = "Installation…";
             UpdateService.LaunchInstaller(setup);
             await Task.Delay(400);
-            System.Windows.Application.Current.Shutdown();
+            ((App)System.Windows.Application.Current).QuitFromWindow();
         }
         catch
         {
@@ -1079,6 +1079,75 @@ public sealed class MainViewModel : ObservableObject
         }
 
         try { await ActivateAsync(confirm: false); }
+        catch (Exception ex) { OnError(ex); }
+    }
+
+    // ---------------------------------------------------------------- surveillance en arrière-plan
+
+    private DateTime _bgLastScan = DateTime.MinValue;
+    private DateTime _bgLastFailure = DateTime.MinValue;
+    private string? _bgNotifiedFor;
+
+    /// <summary>
+    /// Appelé toutes les 5 s quand ViiCord tourne (même fenêtre cachée). Si Discord a été mis à jour, ViiCord se répare tout
+    /// seul dès que Discord est fermé ; s'il est ouvert, on prévient une fois (réparer = relancer Discord).
+    /// </summary>
+    public async Task BackgroundTickAsync(Action<string, string> balloon)
+    {
+        if (IsBusy) return;
+        AppSettings settings = ConfigService.ReadSettings();
+        if (!settings.AutoRepair || settings.Paused) return;
+
+        bool running = DiscordLifecycle.IsRunning();
+        DateTime now = DateTime.UtcNow;
+        if (running && (now - _bgLastScan).TotalSeconds < 60) return;
+        if ((now - _bgLastFailure).TotalSeconds < 60) return;
+        _bgLastScan = now;
+
+        ScanSnapshot snap = await Task.Run(ScanService.Run);
+        if (!snap.NeedsRepair || snap.Core == null || snap.ExternalMod != null || !_configOk)
+        {
+            _bgNotifiedFor = null;
+            return;
+        }
+
+        if (running)
+        {
+            string key = snap.Core.AppVersion ?? "";
+            if (_bgNotifiedFor != key)
+            {
+                _bgNotifiedFor = key;
+                balloon("Discord a été mis à jour",
+                    "ViiCord doit être réparé. Clic droit sur l'icône ViiCord, puis « Réparer maintenant » (Discord sera relancé).");
+            }
+            return;
+        }
+
+        // Discord est fermé : on peut réparer sans rien perturber.
+        try
+        {
+            List<SoundItem> sounds = Sounds.ToList();
+            DiscordCoreInfo core = snap.Core;
+            await Task.Run(() =>
+            {
+                PrepareConfigQuiet(core, sounds);
+                HookService.InstallAll(core);
+            });
+            ApplySnapshot(await Task.Run(ScanService.Run));
+            balloon("ViiCord réparé", "Discord a changé de version : ViiCord est de nouveau prêt pour tes sons.");
+            _bgNotifiedFor = null;
+        }
+        catch
+        {
+            _bgLastFailure = DateTime.UtcNow;
+        }
+    }
+
+    /// <summary>« Réparer maintenant » depuis l'icône près de l'horloge.</summary>
+    public async Task RepairFromTrayAsync()
+    {
+        if (IsBusy) return;
+        try { await RepairAsync(); }
         catch (Exception ex) { OnError(ex); }
     }
 
